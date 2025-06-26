@@ -90,6 +90,12 @@ resource "aws_lambda_permission" "apigw_lambda" {
   function_name = aws_lambda_function.main_agent.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.sf_support_api.execution_arn}/*/*"
+  
+  # 依存関係を明示的に定義
+  depends_on = [
+    aws_lambda_function.main_agent,
+    aws_api_gateway_rest_api.sf_support_api
+  ]
 }
 
 # デプロイメント

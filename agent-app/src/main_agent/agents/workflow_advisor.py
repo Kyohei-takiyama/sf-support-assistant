@@ -1,5 +1,9 @@
 import json
 import os
+import logging
+
+# ログ設定
+logger = logging.getLogger(__name__)
 
 class WorkflowAdvisor:
     """
@@ -7,8 +11,10 @@ class WorkflowAdvisor:
     """
 
     def __init__(self, lambda_client):
+        logger.info("Initializing WorkflowAdvisor")
         self.lambda_client = lambda_client
         self.search_function_name = os.environ.get('WEB_SEARCH_FUNCTION_NAME')
+        logger.info(f"Web Search Function Name: {self.search_function_name}")
 
     def search_external_info(self, subject, description):
         """

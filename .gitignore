@@ -107,3 +107,6 @@ temp/
 *.temp
 
 CLAUDE.md
+.sfdx
+demo
+*.sh
