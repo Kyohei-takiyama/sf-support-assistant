@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <flexiPageRegions>
+        <name>main</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <masterLabel>Case Record Page with Support Assistant</masterLabel>
+    <template>
+        <name>flexipage:recordHomeTemplateDesktop</name>
+    </template>
+    <type>RecordPage</type>
+    <utilityBar>
+        <utilityItems>
+            <utilityItem>
+                <componentInstance>
+                    <componentName>supportAssistant</componentName>
+                    <identifier>supportAssistant</identifier>
+                    <componentInstanceProperties>
+                        <name>eager</name>
+                        <value>true</value>
+                    </componentInstanceProperties>
+                </componentInstance>
+                <label>Support Assistant</label>
+                <panelHeight>600</panelHeight>
+                <panelWidth>400</panelWidth>
+                <utilityIcon>announcement</utilityIcon>
+                <utilityName>supportAssistant</utilityName>
+            </utilityItem>
+        </utilityItems>
+    </utilityBar>
+</FlexiPage>

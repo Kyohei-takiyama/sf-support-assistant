@@ -1,0 +1,5 @@
+<aura:component description="Utility Bar Wrapper for Support Assistant LWC" 
+               implements="force:hasRecordId,lightning:utilityItem" 
+               access="global">
+    <c:supportAssistant recordId="{!v.recordId}" />
+</aura:component>

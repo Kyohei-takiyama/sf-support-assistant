@@ -111,12 +111,17 @@ class IntegrationManager:
 
     def _generate_simple_response(self, case_analysis, search_results, question):
         """
-        シンプルな統合回答を生成
+        シンプルな統合回答を生成（質問に応じた動的な回答）
         """
         try:
+            import time
             response = []
 
+            # タイムスタンプを含めて回答の一意性を確保
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            
             response.append("【Salesforce サポート回答】")
+            response.append(f"回答日時: {timestamp}")
             response.append("")
 
             # ケース基本情報
@@ -126,47 +131,127 @@ class IntegrationManager:
             response.append(f"ステータス: {case_analysis.get('status', 'N/A')}")
             response.append("")
 
-            # 質問への回答
+            # 質問への個別回答
             response.append("【ご質問への回答】")
             response.append(f"お問い合わせ: {question}")
             response.append("")
+            
+            # 質問内容に基づく具体的な回答を生成
+            question_lower = question.lower()
+            subject_lower = case_analysis.get('subject', '').lower()
+            
+            if any(keyword in question_lower for keyword in ['どうすれば', 'どうやって', '方法', 'やり方']):
+                response.append("【解決方法】")
+                if any(keyword in subject_lower or keyword in question_lower for keyword in ['ログイン', 'セッション', 'タイムアウト']):
+                    response.extend([
+                        "セッションタイムアウトの問題を解決するために、以下の手順をお試しください：",
+                        "",
+                        "1. **ブラウザの設定確認**",
+                        "   - ブラウザのキャッシュとCookieを完全にクリアしてください",
+                        "   - セキュリティ設定でJavaScriptが有効になっていることを確認してください",
+                        "",
+                        "2. **ネットワーク環境の確認**",
+                        "   - 安定したネットワーク接続を使用してください",
+                        "   - VPNを使用している場合は、一時的に無効にしてお試しください",
+                        "",
+                        "3. **異なる環境でのテスト**",
+                        "   - 別のブラウザ（Chrome、Firefox、Safari、Edge）でお試しください",
+                        "   - インコグニトモード/プライベートブラウジングモードをお試しください",
+                        "",
+                        "4. **Salesforce側の設定確認**",
+                        "   - システム管理者にセッションタイムアウト設定を確認していただいてください",
+                        "   - ユーザープロファイルのログイン時間制限を確認してください"
+                    ])
+                elif any(keyword in subject_lower or keyword in question_lower for keyword in ['データ', 'インポート', '取り込み']):
+                    response.extend([
+                        "データインポートの問題を解決するために、以下の手順をお試しください：",
+                        "",
+                        "1. **ファイル形式の確認**",
+                        "   - CSVファイルの場合：UTF-8エンコーディングで保存されていることを確認",
+                        "   - 区切り文字がカンマ（,）になっていることを確認",
+                        "",
+                        "2. **データ形式の確認**",
+                        "   - 必須項目がすべて入力されていることを確認",
+                        "   - 日付形式がSalesforceの要求形式（YYYY-MM-DD）になっていることを確認",
+                        "   - 文字数制限を超えていないことを確認",
+                        "",
+                        "3. **インポート設定の確認**",
+                        "   - 適切なオブジェクト（リード、商談、取引先など）が選択されていることを確認",
+                        "   - フィールドマッピングが正しく設定されていることを確認"
+                    ])
+                else:
+                    response.extend([
+                        "問題を解決するために、以下の一般的な手順をお試しください：",
+                        "",
+                        "1. **問題の詳細確認**",
+                        "   - エラーメッセージの正確な内容をご確認ください",
+                        "   - 問題が発生する具体的な手順をお教えください",
+                        "",
+                        "2. **環境の確認**",
+                        "   - 使用しているブラウザとバージョンをお教えください",
+                        "   - 他のユーザーでも同様の問題が発生するかご確認ください",
+                        "",
+                        "3. **基本的なトラブルシューティング**",
+                        "   - ページの再読み込み（F5キー）をお試しください",
+                        "   - 別のブラウザでの動作をご確認ください"
+                    ])
+            elif any(keyword in question_lower for keyword in ['なぜ', '原因', '理由']):
+                response.append("【原因の分析】")
+                response.extend([
+                    f"「{case_analysis.get('subject', '')}」の問題について、考えられる原因は以下の通りです：",
+                    "",
+                    "1. **技術的要因**",
+                    "   - システムの一時的な不具合",
+                    "   - ネットワーク接続の問題",
+                    "   - ブラウザの互換性問題",
+                    "",
+                    "2. **設定要因**",
+                    "   - ユーザー権限の不足",
+                    "   - セキュリティ設定の制限",
+                    "   - カスタム設定の影響",
+                    "",
+                    "3. **データ要因**",
+                    "   - 入力データの形式問題",
+                    "   - 必須項目の未入力",
+                    "   - データ量の制限超過"
+                ])
+            else:
+                response.append("【対応方法】")
+                response.extend([
+                    "ご質問の内容に基づき、以下の対応をお勧めいたします：",
+                    "",
+                    "1. 詳細な状況をお聞かせください",
+                    "2. エラーメッセージがある場合はスクリーンショットをお送りください",
+                    "3. 問題の再現手順を詳しくお教えください"
+                ])
 
             # 類似ケースの情報
             similar_cases = case_analysis.get('similar_cases', [])
             if similar_cases:
-                response.append("【類似ケースの参考情報】")
-                for i, case in enumerate(similar_cases[:2], 1):
-                    response.append(f"{i}. {case.get('Subject', 'N/A')}")
-                    if case.get('Resolution'):
-                        response.append(f"   解決方法: {case.get('Resolution')}")
                 response.append("")
+                response.append("【参考：類似ケース】")
+                for i, case in enumerate(similar_cases[:2], 1):
+                    response.append(f"{i}. ケース#{case.get('CaseNumber', 'N/A')}: {case.get('Subject', 'N/A')}")
+                    if case.get('Status'):
+                        response.append(f"   ステータス: {case.get('Status')}")
 
-            # 推奨対応
-            response.append("【推奨対応】")
-            subject = case_analysis.get('subject', '').lower()
-            if 'ログイン' in subject or 'セッション' in subject or 'タイムアウト' in subject:
-                response.append("1. ブラウザのキャッシュとCookieをクリアしてください")
-                response.append("2. 異なるブラウザ（Chrome、Firefox、Safari）でお試しください")
-                response.append("3. インコグニトモードでアクセスしてみてください")
-                response.append("4. ネットワーク接続の安定性を確認してください")
-                response.append("5. VPN使用時は無効にしてお試しください")
-            elif 'データ' in subject or 'インポート' in subject:
-                response.append("1. ファイル形式（CSV、Excel）を確認してください")
-                response.append("2. 文字エンコーディング（UTF-8）を確認してください")
-                response.append("3. データの形式と必須項目を確認してください")
-            else:
-                response.append("1. 問題の詳細な再現手順をご教示ください")
-                response.append("2. エラーメッセージのスクリーンショットをお送りください")
-                response.append("3. 使用している環境（ブラウザ、OS）をお教えください")
+            # 外部情報がある場合
+            external_results = search_results.get('results', {}).get('results', [])
+            if external_results:
+                response.append("")
+                response.append("【参考：関連情報】")
+                for i, result in enumerate(external_results[:2], 1):
+                    response.append(f"{i}. {result.get('title', '関連記事')}")
+                    response.append(f"   URL: {result.get('url', '')}")
 
             response.append("")
-            response.append("追加のサポートが必要でしたら、お気軽にお申し付けください。")
+            response.append("さらに詳しいサポートが必要でしたら、お気軽にお申し付けください。")
 
             return "\n".join(response)
 
         except Exception as e:
-            print(f"Simple response generation error: {str(e)}")
-            return "申し訳ございませんが、回答生成でエラーが発生しました。手動でのサポートをご提供いたします。"
+            logger.error(f"Simple response generation error: {str(e)}")
+            return f"申し訳ございませんが、回答生成でエラーが発生しました。時刻: {time.strftime('%H:%M:%S')}。手動でのサポートをご提供いたします。"
 
     def _initialize_support_agent(self):
         """
@@ -195,12 +280,21 @@ class IntegrationManager:
         Strands Agent を使用して回答を生成
         """
         try:
-            # プロンプトの構築
+            import time
+            import uuid
+            
+            # 一意なセッションIDを生成して過去のコンテキストを分離
+            session_id = str(uuid.uuid4())[:8]
+            timestamp = int(time.time())
+            
+            # プロンプトの構築（毎回新しいコンテキストとして構築）
             context_prompt = f"""
-あなたはSalesforceのカスタマーサポートエージェントです。
-以下の情報を基に、顧客からの質問に対する適切なサポート回答を生成してください。
+[セッション ID: {session_id}, タイムスタンプ: {timestamp}]
 
-## ケース情報:
+あなたはSalesforceのカスタマーサポートエージェントです。
+これは新しい質問セッションです。過去の回答に依存せず、以下の情報のみを基に、顧客からの質問に対する新しいサポート回答を生成してください。
+
+## 現在のケース情報:
 - ケースID: {case_analysis.get('case_id', 'N/A')}
 - 件名: {case_analysis.get('subject', 'N/A')}
 - 説明: {case_analysis.get('description', 'N/A')}
@@ -208,22 +302,28 @@ class IntegrationManager:
 - ステータス: {case_analysis.get('status', 'N/A')}
 - 顧客: {case_analysis.get('account_name', 'N/A')}
 
-## 類似ケース:
+## 現在の類似ケース:
 {json.dumps(case_analysis.get('similar_cases', []), ensure_ascii=False, indent=2)}
 
-## 外部検索結果:
+## 現在の外部検索結果:
 {json.dumps(search_results, ensure_ascii=False, indent=2)}
 
-## 顧客からの質問:
+## 顧客からの現在の質問:
 {question}
 
-この情報を統合して、具体的で実行可能な解決手順を含む回答を生成してください。
+**重要**: この質問に特化した新しい回答を生成してください。質問の内容に応じて、具体的で実行可能な解決手順を含む回答を作成してください。
 日本語で、顧客に優しく、プロフェッショナルな対応でお答えください。
 
+質問の種類に応じて以下の観点を含めてください：
+- 技術的な問題の場合：トラブルシューティング手順
+- 操作方法の場合：ステップバイステップの説明
+- 設定に関する場合：設定変更の具体的な手順
+- エラーの場合：エラーの原因と解決方法
+
 必要に応じて以下のツールを使用してください：
-- get_salesforce_case_details: ケースの詳細情報を取得
-- find_similar_salesforce_cases: 類似ケースを検索
-- search_external_knowledge: 外部ナレッジベースを検索
+- get_salesforce_case_details: 追加のケース詳細情報を取得
+- find_similar_salesforce_cases: 異なるキーワードで類似ケースを検索
+- search_external_knowledge: 質問に関連する外部ナレッジベースを検索
 """
 
             # Strands Agent で回答生成
@@ -232,7 +332,7 @@ class IntegrationManager:
             return response
 
         except Exception as e:
-            print(f"Strands Agent response generation error: {str(e)}")
+            logger.error(f"Strands Agent response generation error: {str(e)}")
             # フォールバックとしてシンプル版を使用
             return self._generate_simple_response(case_analysis, search_results, question)
 
