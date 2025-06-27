@@ -1,49 +1,154 @@
-# Salesforce Support Assistant Project
+# Salesforce Support Assistant with AI
 
-このプロジェクトは、Salesforce サポート業務を効率化するためのエージェントアプリケーションです。
+Salesforce ケースのインテリジェントなサポートアシスタントを AWS Lambda、Strands Agents、Salesforce LWC で実現したプロジェクトです。
 
-## プロジェクト構造
+## 🎯 概要
+
+カスタマーサポート業務を AI で支援し、ケース解決時間の短縮と対応品質の向上を実現します。
+
+### 主な機能
+
+- 🤖 **AI ケース分析**: ケース内容を自動分析し、解決策を提案
+- 🔍 **類似ケース検索**: 過去の類似ケースから解決パターンを発見
+- 🌐 **外部情報統合**: Web 上の関連記事や既知問題情報を自動収集
+- 💬 **AI チャット**: コンテキストを理解した対話型サポート
+- ⚡ **リアルタイム連携**: Salesforce ユーティリティバーで即座に利用可能
+
+## 🏗️ アーキテクチャ
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Salesforce    │    │   AWS Lambda     │    │  External APIs  │
+│      LWC        │    │   Functions      │    │                 │
+└────────┬────────┘    └────────┬─────────┘    └────────┬────────┘
+         │                      │                        │
+    ┌────▼────┐          ┌─────▼─────┐          ┌──────▼──────┐
+    │ Support │          │   Main    │          │  Tavily API │
+    │Assistant│◄────────►│  Agent    │◄────────►│ Web Search  │
+    │Component│          │  Lambda   │          └──────────────┘
+    └─────────┘          └─────┬─────┘
+                               │
+                         ┌─────▼─────┐
+                         │Salesforce │
+                         │API Lambda │
+                         └─────┬─────┘
+                               │
+                         ┌─────▼─────┐
+                         │  Strands  │
+                         │  Agents   │
+                         └───────────┘
+```
+
+## 📁 プロジェクト構造
 
 ```
 sf-support-assistant/
-├── agent-app/          # AWS Lambda/API Gateway ベースのAIエージェントアプリケーション
-│   ├── src/           # Lambda関数のソースコード
-│   ├── terraform/     # インフラストラクチャのコード
-│   └── README.md      # エージェントアプリの詳細ドキュメント
+├── agent-app/                  # AWS Lambda ベースの AI エージェント
+│   ├── src/
+│   │   ├── main_agent/        # メインエージェント (Strands Agents 統合)
+│   │   ├── sf_api/            # Salesforce API 連携
+│   │   └── web_search/        # Web検索機能 (Tavily API)
+│   ├── terraform/             # インフラストラクチャ定義
+│   └── Makefile              # デプロイ自動化
 │
-├── salesforce/         # Salesforce関連のコードとデモデータ
+├── salesforce/                # Salesforce コンポーネント
+│   └── force-app/
+│       └── main/default/
+│           ├── classes/       # Apex コントローラー
+│           └── lwc/           # Lightning Web Components
 │
-└── README.md          # このファイル
+├── CLAUDE.md                  # AI コード生成ガイド
+└── README.md                  # このファイル
 ```
 
-## 各コンポーネントの説明
+## 🚀 セットアップ
 
-### agent-app/
+### 前提条件
 
-AWS 上で動作するサーバーレス AI エージェントアプリケーション。以下の機能を提供：
+- AWS アカウント
+- Salesforce 開発者組織
+- Terraform インストール済み
+- Python 3.11+
 
-- **Salesforce 連携**: ケース情報の取得と分析
-- **AI 回答生成**: Strands Agents を使用した自動回答
-- **外部情報検索**: Tavily API を使用した Web 検索
-- **REST API**: API Gateway を通じたエンドポイント
+### 1. 環境変数の設定
 
-詳細は[agent-app/README.md](agent-app/README.md)を参照してください。
+```bash
+export SALESFORCE_INSTANCE_URL="https://your-instance.salesforce.com"
+export SALESFORCE_CLIENT_ID="your-client-id"
+export SALESFORCE_CLIENT_SECRET="your-client-secret"
+export TAVILY_API_KEY="your-tavily-api-key"
+```
 
-### salesforce/
-
-Salesforce 側のリソース：
-
-## セットアップ
-
-### 1. エージェントアプリのデプロイ
+### 2. AWS Lambda デプロイ
 
 ```bash
 cd agent-app
-make deploy
+make init    # Terraform 初期化
+make deploy  # Lambda 関数とAPI Gateway をデプロイ
 ```
 
-## 開発環境
+### 3. Salesforce コンポーネントデプロイ
 
-- **AWS**: Lambda (Python 3.11), API Gateway, Terraform
-- **Salesforce**: Apex, SOQL
-- **AI/ML**: Strands Agents, Tavily API
+```bash
+cd salesforce
+# Salesforce CLIでデプロイ
+sf project deploy start
+```
+
+### 4. API エンドポイントの設定
+
+Apex コントローラーの `API_ENDPOINT` をデプロイされた API Gateway URL に更新：
+
+```apex
+private static final String API_ENDPOINT = 'https://your-api-gateway-url/dev/agent';
+```
+
+## 💡 使い方
+
+1. **ケース画面を開く**: Salesforce でケースレコードページを開く
+2. **Support Assistant 起動**: ユーティリティバーから自動起動
+3. **AI 分析確認**: ケース内容の自動分析結果を確認
+4. **チャットで質問**: 具体的な解決方法を AI に質問
+5. **参考情報確認**: 類似ケースや外部記事を参照
+
+## 🛠️ 技術スタック
+
+### Backend
+
+- **AWS Lambda**: Python 3.11 サーバーレス関数
+- **Strands Agents**: AI エージェントフレームワーク
+- **AWS Bedrock**: Claude 3 による自然言語処理
+- **Terraform**: インフラストラクチャ as Code
+
+### Frontend
+
+- **Lightning Web Components (LWC)**: モダンな UI コンポーネント
+- **Apex**: サーバーサイド処理
+- **SOSL**: 広範囲な類似ケース検索
+
+### 外部サービス
+
+- **Tavily API**: Web 検索と情報収集
+- **Salesforce OAuth 2.0**: Client Credentials Flow による認証
+
+## 🔧 開発コマンド
+
+```bash
+# Lambda 関数のパッケージング
+make package
+
+# インフラの変更確認
+make plan
+
+# デプロイ
+make deploy
+
+# リソースの削除
+make destroy
+```
+
+## 📊 パフォーマンス
+
+- **レスポンスタイム**: 平均 3-5 秒（AI 回答生成含む）
+- **類似ケース検索**: 最大 15 件/クエリ × 3 キーワード
+- **タイムアウト**: Lambda 120 秒、API Gateway 30 秒
